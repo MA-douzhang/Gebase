@@ -132,13 +132,14 @@ public class UserController {
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUser(long pageSize, long pageNum, HttpServletRequest httpServletRequest) {
         User loginUser = userService.getLoginUser(httpServletRequest);
-        String redisKey = String.format("gebase:user:recommend:%s", loginUser.getId());
-        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-        //读缓存
-        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
-        if(userPage != null){
-            return ResultUtils.success(userPage);
-        }
+        Page<User> userPage = new Page<>();
+//        String redisKey = String.format("gebase:user:recommend:%s", loginUser.getId());
+//        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+//        //读缓存
+//        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
+//        if(userPage != null){
+//            return ResultUtils.success(userPage);
+//        }
         //无缓存，查数据库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //用户脱敏
@@ -150,11 +151,11 @@ public class UserController {
         userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
         // List<User> list = userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
         //写缓存
-        try {
-            valueOperations.set(redisKey,userPage,1, TimeUnit.DAYS);
-        } catch (Exception e) {
-            log.error("redis set redisKey",e);
-        }
+//        try {
+//            valueOperations.set(redisKey,userPage,1, TimeUnit.DAYS);
+//        } catch (Exception e) {
+//            log.error("redis set redisKey",e);
+//        }
         return ResultUtils.success(userPage);
 
     }
