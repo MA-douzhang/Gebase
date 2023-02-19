@@ -61,10 +61,10 @@ public interface UserService extends IService<User> {
     /**
      * 更新用户信息
      * @param user
-     * @param loginUser
+     * @param httpServletRequest
      * @return 1为更新成功，0为失败
      */
-    int updateUser(User user, User loginUser);
+    boolean updateUser(User user, HttpServletRequest httpServletRequest);
 
     boolean isAdmin(HttpServletRequest httpServletRequest);
 

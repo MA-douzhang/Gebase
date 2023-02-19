@@ -14,6 +14,7 @@ import com.madou.gebase.utils.AlgorithmUtils;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -198,9 +199,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public int updateUser(User user, User loginUser) {
+    public boolean updateUser(User user, HttpServletRequest httpServletRequest) {
         long userId = user.getId();
-        //todo 对传递来的user参数判断，不能为空等等，增加判断条件
+        //todo 对传递来的user参数判断，不能为空等等，增加判断条件,同时更新会话的信息
+        User loginUser = (User) this.getLoginUser(httpServletRequest);
         if(userId<=0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -213,7 +215,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(oldUser == null){
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        return userMapper.updateById(user);
+        int updateById = userMapper.updateById(user);
+        if (updateById != 1){
+            return false;
+        }
+        //普通用户重新更新会话，管理员不更新
+        if (!isAdmin(loginUser)){
+            oldUser = userMapper.selectById(userId);
+            User safetyUser = getSafetyUser(oldUser);
+            httpServletRequest.getSession().setAttribute(USER_LOGIN_STATE,safetyUser);
+        }
+        return true;
     }
 
     /**
