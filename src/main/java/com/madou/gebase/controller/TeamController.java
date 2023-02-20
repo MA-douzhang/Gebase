@@ -1,6 +1,7 @@
 package com.madou.gebase.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.madou.gebase.common.BaseResponse;
 import com.madou.gebase.common.ErrorCode;
@@ -261,12 +262,14 @@ public class TeamController {
         //根据userId取出加入队伍teamId的值
         List<Long> longList = new ArrayList<>(listMap.keySet());
         teamQuery.setListUserId(longList);
-
-        List<UserTeamVO> teamList = teamService.listTeams(teamQuery, true);
-        //队伍hasJoin字段位true
-        teamList.forEach(team -> {
-            team.setHasJoin(true);
-        });
+        List<UserTeamVO> teamList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(longList)){
+            teamList = teamService.listTeams(teamQuery, true);
+            //队伍hasJoin字段位true
+            teamList.forEach(team -> {
+                team.setHasJoin(true);
+            });
+        }
         return ResultUtils.success(teamList);
     }
 
