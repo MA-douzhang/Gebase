@@ -12,6 +12,7 @@ import com.madou.gebase.model.dto.TeamQuery;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.model.Team;
 import com.madou.gebase.model.request.*;
+import com.madou.gebase.model.vo.TeamVO;
 import com.madou.gebase.model.vo.UserTeamVO;
 import com.madou.gebase.service.TeamService;
 import com.madou.gebase.service.UserService;
@@ -116,11 +117,11 @@ public class TeamController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<Team> getTeamById(@RequestParam long id) {
+    public BaseResponse<TeamVO> getTeamById(@RequestParam long id) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Team team = teamService.getById(id);
+        TeamVO team = teamService.getTeamInfoById(id);
         if (team == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询队伍失败");
         }

@@ -9,6 +9,7 @@ import com.madou.gebase.model.request.TeamAddRequest;
 import com.madou.gebase.model.request.TeamJoinRequest;
 import com.madou.gebase.model.request.TeamQuitRequest;
 import com.madou.gebase.model.request.TeamUpdateRequest;
+import com.madou.gebase.model.vo.TeamVO;
 import com.madou.gebase.model.vo.UserTeamVO;
 
 import java.util.List;
@@ -67,4 +68,11 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     boolean deleteTeam(long teamId, User loginUser);
+
+    /**
+     * 根据队伍Id查询队伍信息
+     * @param id
+     * @return TeamVO
+     */
+    TeamVO getTeamInfoById(long id);
 }

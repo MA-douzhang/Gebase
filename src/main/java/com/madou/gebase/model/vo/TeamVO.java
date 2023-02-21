@@ -1,14 +1,16 @@
 package com.madou.gebase.model.vo;
 
 import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
- * 队伍用户关系封装类（脱敏）
+ * 查询队伍信息的返回包装类
  */
 @Data
-public class UserTeamVO implements Serializable {
+public class TeamVO implements Serializable {
 
     /**
      * 队伍id
@@ -64,7 +66,8 @@ public class UserTeamVO implements Serializable {
      */
     private Integer hasJoinNum;
     /**
-     * 用户是否加入队伍
+     * 加入队伍的用户信息
      */
-    private boolean hasJoin = false;
+    private List<UserVO> userJoinList;
+
 }

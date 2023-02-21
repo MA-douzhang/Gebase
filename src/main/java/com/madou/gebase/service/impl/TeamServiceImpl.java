@@ -13,6 +13,7 @@ import com.madou.gebase.model.enums.TeamStatusEnums;
 import com.madou.gebase.model.request.TeamJoinRequest;
 import com.madou.gebase.model.request.TeamQuitRequest;
 import com.madou.gebase.model.request.TeamUpdateRequest;
+import com.madou.gebase.model.vo.TeamVO;
 import com.madou.gebase.model.vo.UserTeamVO;
 import com.madou.gebase.model.vo.UserVO;
 import com.madou.gebase.service.TeamService;
@@ -175,11 +176,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
         List<UserTeamVO> userTeamVOList = new ArrayList<>();
         for (Team team : teamList) {
-            Long teamId = team.getUserId();
-            if (teamId == null) {
+            Long userId = team.getUserId();
+            if (userId == null) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR);
             }
-            User user = userService.getById(teamId);
+            User user = userService.getById(userId);
             UserTeamVO userTeamVO = new UserTeamVO();
             //脱敏信息
             if (user != null) {
@@ -377,6 +378,43 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
         //移除队伍
         return this.removeById(teamId);
+    }
+
+    @Override
+    public TeamVO getTeamInfoById(long id) {
+        Team team = this.getById(id);
+        Long userId = team.getUserId();
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User createUser = userService.getById(userId);
+        TeamVO teamVO = new TeamVO();
+        //脱敏信息
+        if (createUser != null) {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(createUser, userVO);
+            teamVO.setCreateUser(userVO);
+        }
+        BeanUtils.copyProperties(team, teamVO);
+        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("teamId",id);
+        List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
+        //获取加入队伍的用户id
+        List<Long> userIdList = userTeamList.stream().map(UserTeam::getUserId).collect(Collectors.toList());
+        //根据用户id查出详细的信息
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id",userIdList);
+        List<User> userList = userService.list(userQueryWrapper);
+        //用户脱敏
+        List<UserVO> userVOList = new ArrayList<>();
+        for (User user:userList) {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user,userVO);
+            userVOList.add(userVO);
+        }
+        teamVO.setUserJoinList(userVOList);
+        teamVO.setHasJoinNum(userVOList.size());
+        return teamVO;
     }
 
     /**
