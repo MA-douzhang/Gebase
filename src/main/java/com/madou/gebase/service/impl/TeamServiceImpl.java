@@ -361,7 +361,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean deleteTeam(long teamId, User loginUser) {
         Team team = getTeamById(teamId);
         //是否为队长
@@ -369,15 +368,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (team.getUserId() != userId) {
             throw new BusinessException(ErrorCode.NO_ADMIN);
         }
-        //移除所有队伍中用户
-        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("teamId", teamId);
-        boolean result = userTeamService.remove(queryWrapper);
-        if (!result) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除队伍中用户失败");
-        }
         //移除队伍
-        return this.removeById(teamId);
+        return removeByTeamId(teamId);
     }
 
     @Override
@@ -417,6 +409,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamVO;
     }
 
+
+
     /**
      * 获取队伍中的人数
      *
@@ -444,6 +438,23 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             throw new BusinessException(ErrorCode.NULL_ERROR, "队伍不存在");
         }
         return team;
+    }
+
+    /**
+     * 根据队伍id解散队伍
+     * @param teamId
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean removeByTeamId(long teamId) {
+        QueryWrapper<UserTeam> teamIdQueryWrapper = new QueryWrapper<>();
+        teamIdQueryWrapper.eq("teamId", teamId);
+        boolean result = userTeamService.remove(teamIdQueryWrapper);
+        if (!result) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除队伍中用户失败");
+        }
+        return this.removeById(teamId);
     }
 }
 

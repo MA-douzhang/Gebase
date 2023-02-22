@@ -75,4 +75,11 @@ public interface TeamService extends IService<Team> {
      * @return TeamVO
      */
     TeamVO getTeamInfoById(long id);
+
+    /**
+     * 根据队伍的id解散队伍
+     * @param teamId
+     * @return
+     */
+    boolean removeByTeamId(long teamId);
 }
