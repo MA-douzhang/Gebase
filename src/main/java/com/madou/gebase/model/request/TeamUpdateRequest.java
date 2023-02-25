@@ -12,10 +12,6 @@ import java.util.Date;
 public class TeamUpdateRequest implements Serializable {
 
     private Long id;
-    /**
-     * 用户id
-     */
-    private Long userId;
 
     /**
      * 队伍名称

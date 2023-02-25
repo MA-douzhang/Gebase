@@ -69,16 +69,16 @@ public class TeamController {
     /**
      * 解散队伍
      *
-     * @param deleteRequest
+     * @param objectIdRequest
      * @param httpServletRequest
      * @return
      */
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteTeam(@RequestBody DeleteRequest deleteRequest, HttpServletRequest httpServletRequest) {
-        if (deleteRequest == null) {
+    public BaseResponse<Boolean> deleteTeam(@RequestBody ObjectIdRequest objectIdRequest, HttpServletRequest httpServletRequest) {
+        if (objectIdRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Long id = deleteRequest.getId();
+        Long id = objectIdRequest.getId();
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }

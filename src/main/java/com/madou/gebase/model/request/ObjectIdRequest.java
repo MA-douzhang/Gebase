@@ -8,9 +8,9 @@ import java.io.Serializable;
  * 删除请求体
  */
 @Data
-public class DeleteRequest implements Serializable {
+public class ObjectIdRequest implements Serializable {
     /**
-     * 队伍id
+     * 删除对象 id
      */
     private Long id;
 }
