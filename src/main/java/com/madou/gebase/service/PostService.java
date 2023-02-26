@@ -3,6 +3,7 @@ package com.madou.gebase.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.madou.gebase.model.Post;
 import com.madou.gebase.model.User;
+import com.madou.gebase.model.request.PostCommentAddRequest;
 import com.madou.gebase.model.request.PostUpdateRequest;
 import com.madou.gebase.model.vo.PostVO;
 
@@ -42,4 +43,19 @@ public interface PostService extends IService<Post> {
      * @return
      */
     PostVO getPostInfoById(Long id);
+    /**
+     * 添加帖子评论
+     * @param postCommentAddRequest
+     * @param loginUser
+     * @return
+     */
+    boolean addComment(PostCommentAddRequest postCommentAddRequest, User loginUser);
+
+    /**
+     * 删除帖子评论
+     * @param id
+     * @param loginUser
+     * @return
+     */
+    boolean deleteComment(long id, User loginUser);
 }

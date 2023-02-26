@@ -8,8 +8,10 @@ import com.madou.gebase.model.Post;
 import com.madou.gebase.model.User;
 import com.madou.gebase.model.request.ObjectIdRequest;
 import com.madou.gebase.model.request.PostAddRequest;
+import com.madou.gebase.model.request.PostCommentAddRequest;
 import com.madou.gebase.model.request.PostUpdateRequest;
 import com.madou.gebase.model.vo.PostVO;
+import com.madou.gebase.service.PostCommentService;
 import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,10 @@ public class PostController {
 
     @Resource
     UserService userService;
+
+    @Resource
+    PostCommentService postCommentService;
+
     /**
      * 添加帖子
      * @param postAddRequest
@@ -111,5 +117,42 @@ public class PostController {
         return ResultUtils.success(postVO);
     }
 
+    /**
+     * 添加帖子评论
+     * @param postCommentAddRequest
+     * @param httpServletRequest
+     * @return
+     */
+    @PostMapping("/addComment")
+    public BaseResponse<Boolean> addPostComment(@RequestBody PostCommentAddRequest postCommentAddRequest, HttpServletRequest httpServletRequest) {
+        if (postCommentAddRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        boolean result = postService.addComment(postCommentAddRequest, loginUser);
+        return ResultUtils.success(result);
+    }
 
+    /**
+     * 删除帖子评论
+     * @param objectIdRequest
+     * @param httpServletRequest
+     * @return
+     */
+    @PostMapping("/deleteComment")
+    public BaseResponse<Boolean> deleteComment(@RequestBody ObjectIdRequest objectIdRequest, HttpServletRequest httpServletRequest) {
+        if (objectIdRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long id = objectIdRequest.getId();
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        boolean result = postService.deleteComment(id,loginUser);
+        if (!result) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
+        }
+        return ResultUtils.success(true);
+    }
 }

@@ -20,7 +20,7 @@ public class Post implements Serializable {
     private Long id;
 
     /**
-     * 内容
+     * 内容 大于10字小于600字
      */
     private String content;
 
