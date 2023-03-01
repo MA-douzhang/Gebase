@@ -1,5 +1,7 @@
 package com.madou.gebase.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.madou.gebase.common.BaseResponse;
 import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.common.ResultUtils;
@@ -16,10 +18,13 @@ import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 帖子接口
@@ -116,6 +121,22 @@ public class PostController {
         }
         return ResultUtils.success(postVO);
     }
+    @GetMapping("/list")
+    public BaseResponse<List<PostVO>> getPostList(long pageSize, long pageNum, HttpServletRequest httpServletRequest) {
+        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
+        Page<Post> postPage = postService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        List<Post> records = postPage.getRecords();
+        List<PostVO> postVOList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(records)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        records.forEach(record ->{
+            PostVO postInfoById = postService.getPostInfoById(record.getId());
+            postVOList.add(postInfoById);
+        });
+        return ResultUtils.success(postVOList);
+    }
+
 
     /**
      * 添加帖子评论
@@ -155,4 +176,6 @@ public class PostController {
         }
         return ResultUtils.success(true);
     }
+
+
 }

@@ -25,6 +25,15 @@ public class PostVO implements Serializable {
      * 用户id
      */
     private Long userId;
+    /**
+     * 用户昵称
+     */
+    private String username;
+
+    /**
+     * 头像
+     */
+    private String avatarUrl;
 
     /**
      * 状态 0 正常

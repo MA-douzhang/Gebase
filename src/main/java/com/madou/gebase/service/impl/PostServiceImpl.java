@@ -121,6 +121,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         //帖子脱敏
         PostVO postVO = new PostVO();
         BeanUtils.copyProperties(post, postVO);
+        //查帖子的创建人信息
+        User createUser = userService.getById(postVO.getUserId());
+        postVO.setUsername(createUser.getUsername());
+        postVO.setAvatarUrl(createUser.getAvatarUrl());
         //查询帖子评论
         Long postVOId = postVO.getId();
         QueryWrapper<PostComment> queryWrapper = new QueryWrapper<>();

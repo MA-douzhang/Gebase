@@ -5,22 +5,25 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.madou.gebase.common.ErrorCode;
-import com.madou.gebase.contant.UserConstant;
 import com.madou.gebase.exception.BusinessException;
+import com.madou.gebase.mapper.UserMapper;
 import com.madou.gebase.model.User;
 import com.madou.gebase.service.UserService;
-import com.madou.gebase.mapper.UserMapper;
 import com.madou.gebase.utils.AlgorithmUtils;
+import com.madou.gebase.utils.FileUtils;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,10 +44,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     UserMapper userMapper;
+    @Resource
+    private FileUtils fileUtils;
     /**
       * 盐值
      */
+    @Value("${upload.address}")
+    private String webAddress;
     private static final String SALT = "ma_dou";
+
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -322,6 +330,85 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return finalUserList;
     }
+
+    /**
+     * 上传头像
+     * @param avatarImg
+     * @param httpServletRequest
+     * @return
+     */
+    @Override
+    public String uploadAvatar(MultipartFile avatarImg, HttpServletRequest httpServletRequest) {
+        User loginUser = getLoginUser(httpServletRequest);
+        // 校验图片格式
+        if (!imageTypeRight(avatarImg)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"图片格式错误");
+        }
+        // 获取上传文件后的路径
+        String path = uploadFile(avatarImg);
+        if (StringUtils.isBlank(path)){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        // 删除之前的头像(如果是默认头像不删除)
+        String image = loginUser.getAvatarUrl();
+        if (!image.equals("static/default.png")) {
+            //匹配头像图片在本地的uuid
+            if (!fileUtils.del(image.substring(image.indexOf("uploads") + 8))) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"修改头像失败");
+            }
+        }
+        path = webAddress+path;
+        loginUser.setAvatarUrl(path);
+        boolean result = this.updateById(loginUser);
+        if (!result){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"用户头像更新失败");
+        }
+        //普通用户重新更新会话，管理员不更新
+        if (!isAdmin(loginUser)){
+            User safetyUser = getSafetyUser(loginUser);
+            httpServletRequest.getSession().setAttribute(USER_LOGIN_STATE,safetyUser);
+        }
+        return loginUser.getAvatarUrl();
+    }
+
+    /**
+     * 验证图片的格式
+     *
+     * @param file 图片
+     * @return
+     */
+    private boolean imageTypeRight(MultipartFile file) {
+        // 首先校验图片格式
+        List<String> imageType = Arrays.asList("jpg", "jpeg", "png", "bmp", "gif");
+        // 获取文件名，带后缀
+        String originalFilename = file.getOriginalFilename();
+        // 获取文件的后缀格式
+        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();  //不带 .
+        return imageType.contains(fileSuffix);
+    }
+    /**
+     * 上传文件
+     *
+     * @param file
+     * @return 返回路径
+     */
+    public String uploadFile(MultipartFile file) {
+
+        String originalFilename = file.getOriginalFilename();
+        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+        // 只有当满足图片格式时才进来，重新赋图片名，防止出现名称重复的情况
+        String newFileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileSuffix;
+        // 该方法返回的为当前项目的工作目录，即在哪个地方启动的java线程
+        File fileTransfer = new File(fileUtils.getPath(), newFileName);
+        try {
+            file.transferTo(fileTransfer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // 将图片相对路径返回给前端
+        return "/uploads/" + newFileName;
+    }
+
 }
 
 

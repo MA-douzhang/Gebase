@@ -1,7 +1,8 @@
 package com.madou.gebase.service;
 
-import com.madou.gebase.model.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.madou.gebase.model.User;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -77,4 +78,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     List<User> matchUsers(long num, User loginUser);
+
+    /**
+     * 上传头像
+     * @param avatarImg
+     * @param httpServletRequest
+     * @return
+     */
+    String uploadAvatar(MultipartFile avatarImg, HttpServletRequest httpServletRequest);
+
 }

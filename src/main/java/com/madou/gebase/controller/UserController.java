@@ -7,26 +7,20 @@ import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.common.ResultUtils;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.model.User;
-import com.madou.gebase.model.request.TeamJoinRequest;
 import com.madou.gebase.model.request.UserLoginRequest;
 import com.madou.gebase.model.request.UserRegisterRequest;
-import com.madou.gebase.model.vo.UserVO;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.madou.gebase.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户接口
@@ -178,4 +172,16 @@ public class UserController {
         User loginUser = userService.getLoginUser(httpServletRequest);
         return ResultUtils.success(userService.matchUsers(num,loginUser));
     }
+
+    @PostMapping("/upload/avatar")
+    public BaseResponse<String> uploadAvatar(MultipartFile avatarImg , HttpServletRequest httpServletRequest){
+        if (avatarImg == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String result = userService.uploadAvatar(avatarImg, httpServletRequest);
+        return ResultUtils.success(result);
+    }
 }
+
+
+
