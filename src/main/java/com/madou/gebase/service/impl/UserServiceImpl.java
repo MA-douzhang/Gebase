@@ -8,12 +8,14 @@ import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.UserMapper;
 import com.madou.gebase.model.User;
+import com.madou.gebase.model.dto.UserConsumerQuery;
 import com.madou.gebase.service.UserService;
 import com.madou.gebase.utils.AlgorithmUtils;
 import com.madou.gebase.utils.FileUtils;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -369,6 +371,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             httpServletRequest.getSession().setAttribute(USER_LOGIN_STATE,safetyUser);
         }
         return loginUser.getAvatarUrl();
+    }
+
+    @Override
+    public UserConsumerQuery getByAccount(String account) {
+        if (StringUtils.isBlank(account)){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount",account);
+        User user = this.getOne(queryWrapper);
+        if (user == null){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        UserConsumerQuery consumerQuery = new UserConsumerQuery();
+        BeanUtils.copyProperties(user,consumerQuery);
+        return consumerQuery;
     }
 
     /**
