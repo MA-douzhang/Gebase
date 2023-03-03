@@ -4,13 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.model.Team;
-import com.madou.gebase.model.UserTeam;
 import com.madou.gebase.service.TeamService;
-import com.madou.gebase.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -27,9 +24,6 @@ public class timedTasksJob {
 
     @Resource
     private TeamService teamService;
-    @Resource
-    private UserTeamService userTeamService;
-
 
 
     // 每天执行，解散过期队伍

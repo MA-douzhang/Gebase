@@ -1,6 +1,5 @@
 package com.madou.gebase.config;
 
-import jdk.internal.org.objectweb.asm.commons.RemappingFieldAdapter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

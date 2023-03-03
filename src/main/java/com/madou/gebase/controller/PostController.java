@@ -13,7 +13,6 @@ import com.madou.gebase.model.request.PostAddRequest;
 import com.madou.gebase.model.request.PostCommentAddRequest;
 import com.madou.gebase.model.request.PostUpdateRequest;
 import com.madou.gebase.model.vo.PostVO;
-import com.madou.gebase.service.PostCommentService;
 import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +40,6 @@ public class PostController {
     @Resource
     UserService userService;
 
-    @Resource
-    PostCommentService postCommentService;
 
     /**
      * 添加帖子
