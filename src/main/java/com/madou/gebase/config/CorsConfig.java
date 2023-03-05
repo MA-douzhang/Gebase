@@ -17,7 +17,8 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.addAllowedOrigin("http://localhost:3000/");
-        corsConfiguration.addAllowedOrigin("http://127.0.0.1:5173/"); // 1 设置访问源地址
+        corsConfiguration.addAllowedOrigin("http://127.0.0.1:5173/");
+        corsConfiguration.addAllowedOrigin("http://124.71.138.38:5173/");// 1 设置访问源地址
         corsConfiguration.addAllowedHeader("*"); // 2 设置访问源请求头
         corsConfiguration.addAllowedMethod("*"); // 3 设置访问源请求方法
         corsConfiguration.setAllowCredentials(true);

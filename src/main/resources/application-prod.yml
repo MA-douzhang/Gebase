@@ -8,8 +8,11 @@ spring:
   # session 失效时间
   session:
     timeout: 86400
+  servlet:
+    multipart:
+      max-request-size: 10MB # 上传文件的最大值
+      max-file-size: 5MB # 单个文件上传的最大值
 server:
   address: 0.0.0.0
-upload:
-  path: /www/wwwroot/gebase/uploadAvatarImg/
-  address: http://124.71.138.38:9091/api
+
+#  web-address: http://127.0.0.1:5173/

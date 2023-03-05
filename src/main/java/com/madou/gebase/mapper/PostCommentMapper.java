@@ -1,7 +1,7 @@
 package com.madou.gebase.mapper;
 
-import com.madou.gebase.model.PostComment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.madou.gebase.model.PostComment;
 
 /**
 * @author MA_dou
@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2023-02-25 17:17:07
 * @Entity com.madou.gebase.model.PostComment
 */
+
 public interface PostCommentMapper extends BaseMapper<PostComment> {
 
 }

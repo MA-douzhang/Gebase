@@ -12,7 +12,6 @@ import com.madou.gebase.model.request.UserRegisterRequest;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,10 +32,6 @@ import java.util.stream.Collectors;
 public class UserController {
     @Resource
     private UserService userService;
-
-
-    @Resource
-    private RedisTemplate<String,Object> redisTemplate;
 
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -124,31 +119,13 @@ public class UserController {
 
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUser(long pageSize, long pageNum, HttpServletRequest httpServletRequest) {
-        User loginUser = userService.getLoginUser(httpServletRequest);
-        Page<User> userPage = new Page<>();
-//        String redisKey = String.format("gebase:user:recommend:%s", loginUser.getId());
-//        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-//        //读缓存
-//        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
-//        if(userPage != null){
-//            return ResultUtils.success(userPage);
-//        }
         //无缓存，查数据库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //用户脱敏
         queryWrapper.select("id", "username", "userAccount"
                 , "userProfile", "avatarUrl", "gender", "phone"
                 , "email", "tags", "userRole", "updateTime", "createTime", "userState");
-
-
-        userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
-        // List<User> list = userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
-        //写缓存
-//        try {
-//            valueOperations.set(redisKey,userPage,1, TimeUnit.DAYS);
-//        } catch (Exception e) {
-//            log.error("redis set redisKey",e);
-//        }
+        Page<User>  userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
         return ResultUtils.success(userPage);
 
     }

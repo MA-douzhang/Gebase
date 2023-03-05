@@ -1,6 +1,7 @@
 package com.madou.gebase.utils;
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
@@ -13,7 +14,9 @@ import java.io.File;
 @Data
 public class FileUtils {
 
-    public static final String path = "D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\";
+    @Value("${upload.path}")
+    public String path;
+
 
     public File getPath() {
         // 构建上传文件的存放 "文件夹" 路径

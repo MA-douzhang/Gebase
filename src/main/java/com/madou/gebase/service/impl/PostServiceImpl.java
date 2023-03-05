@@ -15,6 +15,7 @@ import com.madou.gebase.model.vo.PostVO;
 import com.madou.gebase.service.PostCommentService;
 import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  * @createDate 2023-02-25 17:14:17
  */
 @Service
+@Slf4j
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         implements PostService {
 
@@ -85,9 +87,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         }
         QueryWrapper<PostComment> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("postId", id);
-        boolean remove = postCommentService.remove(queryWrapper);
-        if (!remove) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除帖子失败");
+        //删除帖子的评论。如果没有评论则不删除
+        long postCommentCount = postCommentService.count(queryWrapper);
+        if (postCommentCount > 0){
+            boolean remove = postCommentService.remove(queryWrapper);
+            if (!remove) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除帖子评论失败");
+            }
         }
         return this.removeById(id);
     }

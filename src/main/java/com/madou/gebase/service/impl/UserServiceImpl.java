@@ -12,9 +12,9 @@ import com.madou.gebase.model.dto.UserConsumerQuery;
 import com.madou.gebase.service.UserService;
 import com.madou.gebase.utils.AlgorithmUtils;
 import com.madou.gebase.utils.FileUtils;
-import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -93,6 +93,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
+        //添加用户的默认信息
+        user.setUsername(userAccount);
+        user.setAvatarUrl("http://124.71.138.38:9091/api/uploads/default.png");
+        user.setUserProfile("这个人很懒，介绍都不写");
+        user.setTags("[\"女\"]");
         boolean saveResult = this.save(user);
         if (!saveResult){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"数据插入错误");
@@ -225,6 +230,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(oldUser == null){
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
+        //0为男，1为女
+        Integer gender = user.getGender();
+        if (gender != null){
+            if (gender != 1 && gender != 0){
+                return false;
+            }
+        }
         int updateById = userMapper.updateById(user);
         if (updateById != 1){
             return false;
@@ -296,26 +308,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public List<User> matchUsers(long num, User loginUser) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("id","tags");
+        queryWrapper.isNotNull("tags");
         List<User> userList = this.list(queryWrapper);
         String loginUserTags = loginUser.getTags();
         Gson gson = new Gson();
-        List<String> loginTagList= gson.fromJson(loginUserTags,new TypeToken<List<String>>(){}.getType());
+        List<String> tagList= gson.fromJson(loginUserTags,new TypeToken<List<String>>(){}.getType());
         //用户列表下标 相似度
-        List<Pair<User,Long>> tagList = new ArrayList<>();
-        for (User user : userList) {
-            long userId = user.getId();
-            String tags = user.getTags();
-            //计算出所有用户除开空标签和自己
-            if (StringUtils.isBlank(tags) || userId == loginUser.getId()){
+        List<Pair<User, Long>> list = new ArrayList<>();
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            // 无标签或者为当前用户自己
+            if (StringUtils.isBlank(userTags) || user.getId() == loginUser.getId()) {
                 continue;
             }
-            List<String> userTagList= gson.fromJson(tags,new TypeToken<List<String>>(){}.getType());
-            //计算分数
-            long distance = AlgorithmUtils.minDistance(loginTagList, userTagList);
-            tagList.add(new Pair<>(user,distance));
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            // 计算分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            list.add(new Pair<>(user, distance));
         }
         //按分数 大到小排序
-        List<Pair<User, Long>> topUserPairList = tagList.stream()
+        List<Pair<User, Long>> topUserPairList = list.stream()
                 .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
                 .limit(num)
                 .collect(Collectors.toList());
@@ -353,7 +367,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 删除之前的头像(如果是默认头像不删除)
         String image = loginUser.getAvatarUrl();
-        if (!image.equals("static/default.png")) {
+        if (!image.equals("http://124.71.138.38:9091/api/uploads/default.png")) {
             //匹配头像图片在本地的uuid
             if (!fileUtils.del(image.substring(image.indexOf("uploads") + 8))) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR,"修改头像失败");
