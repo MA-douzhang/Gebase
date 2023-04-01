@@ -3,6 +3,7 @@ package com.madou.gebase.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.madou.gebase.common.ErrorCode;
+import com.madou.gebase.contant.RedisConstant;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.TeamMapper;
 import com.madou.gebase.model.Team;
@@ -21,6 +22,8 @@ import com.madou.gebase.service.UserService;
 import com.madou.gebase.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +49,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     @Resource
     private UserTeamService userTeamService;
 
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -259,36 +265,48 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
         //该用户加入队伍数量
         long userId = loginUser.getId();
-        // 抢到锁并执行
+        //只有一个线程抢到加入该队伍的锁
+        RLock lock = redissonClient.getLock(RedisConstant.REDIS_JOIN_TEAM_KEY + teamId);
+        try {
+            //重复抢锁
+            while (true) {
+                if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)){
+                    QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+                    userTeamQueryWrapper.eq("userId", userId);
+                    long hasJoinNum = userTeamService.count(userTeamQueryWrapper);
+                    if (hasJoinNum > 5) {
+                        throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多加入或者创建5个队伍");
+                    }
 
+                    //不能重复加入队伍
+                    userTeamQueryWrapper.eq("teamId", teamId);
+                    long hasUserJoinTeam = userTeamService.count(userTeamQueryWrapper);
+                    if (hasUserJoinTeam > 0) {
+                        throw new BusinessException(ErrorCode.NULL_ERROR, "用户已加入该队伍");
+                    }
 
-        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
-        userTeamQueryWrapper.eq("userId", userId);
-        long hasJoinNum = userTeamService.count(userTeamQueryWrapper);
-        if (hasJoinNum > 5) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多加入或者创建5个队伍");
+                    //已经加入队伍数量
+                    long hasTeamJoinNum = getHasTeamJoinTeam(teamId);
+                    if (hasTeamJoinNum >= team.getMaxNum()) {
+                        throw new BusinessException(ErrorCode.NULL_ERROR, "队伍已满");
+                    }
+                    //修改队伍信息
+                    UserTeam userTeam = new UserTeam();
+                    userTeam.setUserId(userId);
+                    userTeam.setTeamId(teamId);
+                    userTeam.setJoinTime(new Date());
+                    return userTeamService.save(userTeam);
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("doCache joinTeam error", e);
+            return false;
+        }finally {
+            //释放自己的锁
+            if (lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
         }
-
-        //不能重复加入队伍
-        userTeamQueryWrapper.eq("teamId", teamId);
-        long hasUserJoinTeam = userTeamService.count(userTeamQueryWrapper);
-        if (hasUserJoinTeam > 0) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "用户已加入该队伍");
-        }
-
-        //已经加入队伍数量
-        long hasTeamJoinNum = getHasTeamJoinTeam(teamId);
-        if (hasTeamJoinNum >= team.getMaxNum()) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "队伍已满");
-        }
-        //修改队伍信息
-        UserTeam userTeam = new UserTeam();
-        userTeam.setUserId(userId);
-        userTeam.setTeamId(teamId);
-        userTeam.setJoinTime(new Date());
-        return userTeamService.save(userTeam);
-
-
     }
 
     @Override

@@ -12,6 +12,8 @@ import com.madou.gebase.model.request.UserRegisterRequest;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +22,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.madou.gebase.contant.RedisConstant.REDIS_RECOMMEND_KEY;
 
 /**
  * 用户接口
@@ -32,6 +36,9 @@ import java.util.stream.Collectors;
 public class UserController {
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
 
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -119,13 +126,28 @@ public class UserController {
 
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUser(long pageSize, long pageNum, HttpServletRequest httpServletRequest) {
+        String redisKey = REDIS_RECOMMEND_KEY;
+        //得到K/V的值
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+        Page<User> userPage= (Page<User>) valueOperations.get(redisKey);
+        //有缓存返回缓存
+        if (userPage != null){
+            return ResultUtils.success(userPage);
+        }
         //无缓存，查数据库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //用户脱敏
         queryWrapper.select("id", "username", "userAccount"
                 , "userProfile", "avatarUrl", "gender", "phone"
                 , "email", "tags", "userRole", "updateTime", "createTime", "userState");
-        Page<User>  userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        //写缓存
+        try {
+            //缓存在每天的12点和0点更新
+            valueOperations.set(redisKey,userPage);
+        } catch (Exception e) {
+            log.error("redis set key error",e);
+        }
         return ResultUtils.success(userPage);
 
     }
