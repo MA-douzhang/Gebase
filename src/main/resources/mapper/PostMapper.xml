@@ -5,17 +5,19 @@
 <mapper namespace="com.madou.gebase.mapper.PostMapper">
 
     <resultMap id="BaseResultMap" type="com.madou.gebase.model.Post">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="content" column="content" jdbcType="VARCHAR"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="postState" column="postState" jdbcType="INTEGER"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="postState" column="postState" jdbcType="INTEGER"/>
+        <result property="thumbNum" column="thumbNum" jdbcType="INTEGER"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,content,userId,
+        id
+        ,content,userId,thumbNum,
         postState,createTime,updateTime,
         isDelete
     </sql>

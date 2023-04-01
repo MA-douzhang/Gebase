@@ -1,43 +1,36 @@
 package com.madou.gebase.model;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 帖子
- * @TableName post
+ * 帖子点赞
+ * @TableName post_thumb
  */
-@TableName(value ="post")
+@TableName(value ="post_thumb")
 @Data
-public class Post implements Serializable {
+public class PostThumb implements Serializable {
     /**
-     * 帖子id
+     * id
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 内容 大于10字小于600字
+     * 帖子 id
      */
-    private String content;
+    private Long postId;
 
     /**
-     * 用户id
+     * 创建用户 id
      */
     private Long userId;
-
-    /**
-     * 点赞数
-     */
-    private Integer thumbNum;
-
-    /**
-     * 状态 0 正常
-     */
-    private Integer postState;
 
     /**
      * 创建时间
@@ -48,12 +41,6 @@ public class Post implements Serializable {
      * 更新时间
      */
     private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
