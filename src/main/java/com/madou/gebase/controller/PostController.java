@@ -14,6 +14,7 @@ import com.madou.gebase.model.request.PostCommentAddRequest;
 import com.madou.gebase.model.request.PostUpdateRequest;
 import com.madou.gebase.model.vo.PostVO;
 import com.madou.gebase.service.PostService;
+import com.madou.gebase.service.PostThumbService;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -40,9 +41,12 @@ public class PostController {
     @Resource
     UserService userService;
 
+    @Resource
+    PostThumbService postThumbService;
 
     /**
      * 添加帖子
+     *
      * @param postAddRequest
      * @param httpServletRequest
      * @return
@@ -54,8 +58,8 @@ public class PostController {
         }
         User loginUser = userService.getLoginUser(httpServletRequest);
         Post post = new Post();
-        BeanUtils.copyProperties(postAddRequest,post);
-        long postId = postService.addPost(post,loginUser);
+        BeanUtils.copyProperties(postAddRequest, post);
+        long postId = postService.addPost(post, loginUser);
         return ResultUtils.success(postId);
     }
 
@@ -76,7 +80,7 @@ public class PostController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(httpServletRequest);
-        boolean result = postService.deletePost(id,loginUser);
+        boolean result = postService.deletePost(id, loginUser);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }
@@ -85,6 +89,7 @@ public class PostController {
 
     /**
      * 更新帖子
+     *
      * @param postUpdateRequest
      * @param httpServletRequest
      * @return
@@ -95,12 +100,13 @@ public class PostController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(httpServletRequest);
-        boolean result = postService.updatePost(postUpdateRequest,loginUser);
+        boolean result = postService.updatePost(postUpdateRequest, loginUser);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据更新失败");
         }
         return ResultUtils.success(true);
     }
+
     /**
      * 查询帖子
      *
@@ -118,17 +124,33 @@ public class PostController {
         }
         return ResultUtils.success(postVO);
     }
+
+    /**
+     * 返回帖子列表（分页）
+     * todo 可以做分页缓存，该方法多次查询了四次数据库，优化该方法可以大大提高速度
+     * @param pageSize
+     * @param pageNum
+     * @param httpServletRequest
+     * @return
+     */
     @GetMapping("/list")
     public BaseResponse<List<PostVO>> getPostList(long pageSize, long pageNum, HttpServletRequest httpServletRequest) {
         QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
         Page<Post> postPage = postService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        //获取查询数据
         List<Post> records = postPage.getRecords();
         List<PostVO> postVOList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(records)){
+        if (CollectionUtils.isEmpty(records)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        records.forEach(record ->{
+        //查询点赞列表的postId，postId存在着set
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        List<Long> userPostThumb = postThumbService.getUserPostThumb(loginUser);
+        //给帖子信息进行脱敏和该用户是否点赞的判断
+        records.forEach(record -> {
             PostVO postInfoById = postService.getPostInfoById(record.getId());
+            boolean isThumb = userPostThumb.contains(postInfoById.getId());
+            postInfoById.setThumb(isThumb);
             postVOList.add(postInfoById);
         });
         return ResultUtils.success(postVOList);
@@ -137,6 +159,7 @@ public class PostController {
 
     /**
      * 添加帖子评论
+     *
      * @param postCommentAddRequest
      * @param httpServletRequest
      * @return
@@ -153,6 +176,7 @@ public class PostController {
 
     /**
      * 删除帖子评论
+     *
      * @param objectIdRequest
      * @param httpServletRequest
      * @return
@@ -167,7 +191,7 @@ public class PostController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(httpServletRequest);
-        boolean result = postService.deleteComment(id,loginUser);
+        boolean result = postService.deleteComment(id, loginUser);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }

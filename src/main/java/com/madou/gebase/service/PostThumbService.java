@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.madou.gebase.model.PostThumb;
 import com.madou.gebase.model.User;
 
+import java.util.List;
+
 /**
 * @author MA_dou
 * @description 针对表【post_thumb(帖子点赞)】的数据库操作Service
@@ -20,4 +22,10 @@ public interface PostThumbService extends IService<PostThumb> {
      */
     int doPostThumb(long postId, User loginUser);
 
+    /**
+     * 获取该用户点赞的帖子列表
+     * @param loginUser
+     * @return
+     */
+    List<Long> getUserPostThumb(User loginUser);
 }

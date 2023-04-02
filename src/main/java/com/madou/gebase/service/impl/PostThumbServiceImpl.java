@@ -19,7 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
 * @author MA_dou
@@ -93,6 +96,22 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                 lock.unlock();
             }
         }
+    }
+
+    @Override
+    public List<Long> getUserPostThumb(User loginUser) {
+        long userId = loginUser.getId();
+        QueryWrapper<PostThumb> queryPostThumbWrapper = new QueryWrapper<>();
+        queryPostThumbWrapper.eq("userId", userId);
+        //查询出当前用户点赞所有帖子
+        List<PostThumb> postThumbList = this.list(queryPostThumbWrapper);
+        //给一个postId不存在的初始值
+        List<Long> userPostThumb = Arrays.asList(-1L);
+        //如果不为空，则存在点赞帖子
+        if (postThumbList != null) {
+            userPostThumb = postThumbList.stream().map(PostThumb::getPostId).collect(Collectors.toList());
+        }
+        return userPostThumb;
     }
 }
 
