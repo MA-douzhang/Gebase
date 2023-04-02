@@ -41,6 +41,12 @@ public class PostVO implements Serializable {
     private Integer postState;
 
     /**
+     * 点赞数
+     */
+    private Integer thumbNum;
+
+
+    /**
      * 当前用户是否点赞
      */
     private boolean isThumb;

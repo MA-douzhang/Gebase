@@ -23,6 +23,15 @@ public interface PostThumbService extends IService<PostThumb> {
     int doPostThumb(long postId, User loginUser);
 
     /**
+     * 帖子点赞（内部服务）
+     *
+     * @param userId
+     * @param postId
+     * @return
+     */
+    int doPostThumbInner(long userId, long postId);
+
+    /**
      * 获取该用户点赞的帖子列表
      * @param loginUser
      * @return
