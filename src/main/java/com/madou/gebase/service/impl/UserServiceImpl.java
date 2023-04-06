@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.madou.gebase.common.ErrorCode;
+import com.madou.gebase.contant.RedisConstant;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.UserMapper;
 import com.madou.gebase.model.User;
@@ -15,8 +16,12 @@ import com.madou.gebase.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -27,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +54,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     UserMapper userMapper;
     @Resource
     private FileUtils fileUtils;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
+
+    @Resource
+    private RedissonClient redissonClient;
+
     /**
       * 盐值
      */
@@ -247,6 +260,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             User safetyUser = getSafetyUser(oldUser);
             httpServletRequest.getSession().setAttribute(USER_LOGIN_STATE,safetyUser);
         }
+        //更新缓存中的信息
+        List<User> userList = getRecommend();
+        if (userList == null){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"更新用户信息错误");
+        }
         return true;
     }
 
@@ -401,6 +419,57 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         UserConsumerQuery consumerQuery = new UserConsumerQuery();
         BeanUtils.copyProperties(user,consumerQuery);
         return consumerQuery;
+    }
+
+    @Override
+    public List<User> getRecommend() {
+
+        //反复抢锁 保证数据一致性
+        List<User> userList = new ArrayList<>();
+        //获取锁
+        RLock lock = redissonClient.getLock(RedisConstant.REDIS_RECOMMEND_UPDATE_KEY);
+        try {
+            while (true){
+                //反复抢锁，保证数据一致性
+                if (lock.tryLock(0,-1, TimeUnit.MILLISECONDS)){
+                    //当前获得锁的线程的id是
+                    System.out.println("getLock"+Thread.currentThread().getId());
+                    //查询信息
+                    //todo 可以单独mapper方法
+                    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+                    //用户脱敏
+                    queryWrapper.select("id", "username", "userAccount"
+                            , "userProfile", "avatarUrl", "gender", "phone"
+                            , "email", "tags", "userRole", "updateTime", "createTime", "userState");
+                    userList = this.list(queryWrapper);
+                    ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+                    //写缓存
+                    try {
+                        valueOperations.set(RedisConstant.REDIS_RECOMMEND_KEY,userList);
+                    } catch (Exception e) {
+                        log.error("redis set key error",e);
+                    }
+                    return userList;
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("doCacheRecommendUser error", e);
+        }finally {
+            //只能自己释放自己的锁
+            if (lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
+        }
+        return userList;
+    }
+
+    @Override
+    public List<User> getRecommendCache() {
+        //查询缓存
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+        List<User> userList= (List<User>) valueOperations.get(RedisConstant.REDIS_RECOMMEND_KEY);
+        //缓存为空，查询数据库并写入缓存,不为空返回缓存数据
+        return userList == null ? getRecommend():userList;
     }
 
     /**

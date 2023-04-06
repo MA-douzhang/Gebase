@@ -61,7 +61,7 @@ public interface UserService extends IService<User> {
     User getLoginUser(HttpServletRequest httpServletRequest);
 
     /**
-     * 更新用户信息
+     * 更新用户信息(同时更新缓存)
      * @param user
      * @param httpServletRequest
      * @return 1为更新成功，0为失败
@@ -94,4 +94,17 @@ public interface UserService extends IService<User> {
      * @return
      */
     UserConsumerQuery getByAccount(String account);
+
+
+    /**
+     * 查询数据库返回所有用户信息 同时更新缓存
+     * @return
+     */
+    List<User> getRecommend();
+
+    /**
+     * 查询缓存中的用户信息
+     * @return
+     */
+    List<User> getRecommendCache();
 }

@@ -1,27 +1,17 @@
 package com.madou.gebase.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.model.Team;
-import com.madou.gebase.model.User;
 import com.madou.gebase.service.TeamService;
-import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static com.madou.gebase.contant.RedisConstant.REDIS_RECOMMEND_KEY;
 
 /**
  * 每天凌晨0点解散过期队伍
@@ -35,14 +25,6 @@ public class timedTasksJob {
     @Resource
     private TeamService teamService;
 
-    @Resource
-    private UserService userService;
-
-    @Resource
-    private RedisTemplate<String,Object> redisTemplate;
-
-    @Resource
-    private RedissonClient redissonClient;
 
     // 每天执行，解散过期队伍
     @Scheduled(cron = "0 0 0 * * ?")
@@ -62,39 +44,39 @@ public class timedTasksJob {
         });
     }
 
-    // 每天每小时更新一次点执行，更新用户列表，集群部署下只需要一个服务器完成缓存更新
-    @Scheduled(cron = "0 0 0-23 * * ?")
-    public void updateUserList() {
-        //获取锁
-        RLock lock = redissonClient.getLock("gebase:precachejob:docache:lock");
-        try {
-            if (lock.tryLock(0,-1, TimeUnit.MILLISECONDS)){
-                //当前获得锁的线程的id是
-                System.out.println("getLock"+Thread.currentThread().getId());
-                //查询信息
-                //todo 可以单独mapper方法
-                QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-                //用户脱敏
-                queryWrapper.select("id", "username", "userAccount"
-                        , "userProfile", "avatarUrl", "gender", "phone"
-                        , "email", "tags", "userRole", "updateTime", "createTime", "userState");
-                Page<User> userPage = userService.page(new Page<>(1, 15), queryWrapper);
-                String redisKey = REDIS_RECOMMEND_KEY;
-                ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-                //写缓存
-                try {
-                    valueOperations.set(redisKey,userPage);
-                } catch (Exception e) {
-                    log.error("redis set key error",e);
-                }
-            }
-        } catch (InterruptedException e) {
-            log.error("doCacheRecommendUser error", e);
-        }finally {
-            //只能自己释放自己的锁
-            if (lock.isHeldByCurrentThread()){
-                lock.unlock();
-            }
-        }
-    }
+//    // 每天每小时更新一次点执行，更新用户列表，集群部署下只需要一个服务器完成缓存更新
+//    @Scheduled(cron = "0 0 0-23 * * ?")
+//    public void updateUserList() {
+//        //获取锁
+//        RLock lock = redissonClient.getLock("gebase:precachejob:docache:lock");
+//        try {
+//            if (lock.tryLock(0,-1, TimeUnit.MILLISECONDS)){
+//                //当前获得锁的线程的id是
+//                System.out.println("getLock"+Thread.currentThread().getId());
+//                //查询信息
+//
+//                QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//                //用户脱敏
+//                queryWrapper.select("id", "username", "userAccount"
+//                        , "userProfile", "avatarUrl", "gender", "phone"
+//                        , "email", "tags", "userRole", "updateTime", "createTime", "userState");
+//                List<User> userPage = userService.list(queryWrapper);
+//                String redisKey = REDIS_RECOMMEND_KEY;
+//                ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+//                //写缓存
+//                try {
+//                    valueOperations.set(redisKey,userPage);
+//                } catch (Exception e) {
+//                    log.error("redis set key error",e);
+//                }
+//            }
+//        } catch (InterruptedException e) {
+//            log.error("doCacheRecommendUser error", e);
+//        }finally {
+//            //只能自己释放自己的锁
+//            if (lock.isHeldByCurrentThread()){
+//                lock.unlock();
+//            }
+//        }
+//    }
 }

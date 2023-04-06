@@ -11,6 +11,10 @@ public interface RedisConstant {
      */
     String REDIS_JOIN_TEAM_KEY = "gebase:join_team";
 
+    /**
+     * 用户点赞的key
+     */
     String REDIS_THUMB_KEY = "gebase:THUMB";
 
+    String REDIS_RECOMMEND_UPDATE_KEY = "gebase:user:recommend:update";
 }
