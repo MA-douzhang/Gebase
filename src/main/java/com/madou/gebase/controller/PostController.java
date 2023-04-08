@@ -145,12 +145,11 @@ public class PostController {
         }
         //查询点赞列表的postId，postId存在着set
         User loginUser = userService.getLoginUser(httpServletRequest);
-        List<Long> userPostThumb = postThumbService.getUserPostThumb(loginUser);
         //给帖子信息进行脱敏和该用户是否点赞的判断
         records.forEach(record -> {
             PostVO postInfoById = postService.getPostInfoById(record.getId());
-            boolean isThumb = userPostThumb.contains(postInfoById.getId());
-            postInfoById.setThumb(isThumb);
+            //查询缓存 当前登录用户存是否在点赞中
+            postInfoById.setThumb(postThumbService.isPostThumb(postInfoById.getId(),loginUser.getId()));
             postVOList.add(postInfoById);
         });
         return ResultUtils.success(postVOList);

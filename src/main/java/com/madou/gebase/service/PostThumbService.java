@@ -37,4 +37,13 @@ public interface PostThumbService extends IService<PostThumb> {
      * @return
      */
     List<Long> getUserPostThumb(User loginUser);
+
+    /**
+     * 判断当前登录用户是否点赞该帖子(查询缓存)
+     *
+     * @param id
+     * @param userId
+     * @return true是存在该帖子的点赞
+     */
+    boolean isPostThumb(Long id, long userId);
 }

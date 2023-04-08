@@ -3,6 +3,7 @@ package com.madou.gebase.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.madou.gebase.common.ErrorCode;
+import com.madou.gebase.contant.RedisConstant;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.PostMapper;
 import com.madou.gebase.model.Post;
@@ -17,15 +18,17 @@ import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author MA_dou
@@ -41,6 +44,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     UserService userService;
     @Resource
     PostCommentService postCommentService;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
 
     @Override
     public long addPost(Post post, User loginUser) {
@@ -133,33 +142,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         postVO.setAvatarUrl(createUser.getAvatarUrl());
         //查询帖子评论
         Long postVOId = postVO.getId();
-        QueryWrapper<PostComment> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("postId", postVOId);
-        List<PostComment> postCommentList = postCommentService.list(queryWrapper);
-        List<PostCommentVO> postCommentVOList = new ArrayList<>();
-        //帖子有评论就加载评论
-        if (postCommentList != null && postCommentList.size() > 0) {
-            //查询评论用户的信息
-            List<Long> userIdList = postCommentList.stream().map(PostComment::getUserId).collect(Collectors.toList());
-            QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-            userQueryWrapper.in("id", userIdList);
-            // userId -> user 用户id对应用户信息
-            Map<Long, List<User>> userListMap = userService.list(userQueryWrapper)
-                    .stream().collect(Collectors.groupingBy(User::getId));
-            //将查出来的用户信息与评论信息对接
-            //将信息复制到返回类中
-            postCommentList.forEach(postComment -> {
-                PostCommentVO postCommentVO = new PostCommentVO();
-                BeanUtils.copyProperties(postComment, postCommentVO);
-                postCommentVOList.add(postCommentVO);
-            });
-            //将用户信息对接给评论
-            postCommentVOList.forEach(postCommentVO -> {
-                User user = userListMap.get(postCommentVO.getUserId()).get(0);
-                postCommentVO.setUsername(user.getUsername());
-                postCommentVO.setAvatarUrl(user.getAvatarUrl());
-            });
-        }
+        //查询缓存，没有缓存就查询数据库并更新缓存
+        List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId);
         postVO.setPostCommentList(postCommentVOList);
         return postVO;
     }
@@ -197,10 +181,53 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         }
         final long userId = loginUser.getId();
         postComment.setUserId(userId);
-        boolean result = postCommentService.save(postComment);
-        return result;
+        //查询当前帖子的评论缓存
+        List<PostCommentVO> commentVOListCache = postCommentService.getPostCommentVOListCache(postId);
+        //抢锁更新数据库评论和更新缓存
+        RLock lock = redissonClient.getLock(RedisConstant.REDIS_POST_COMMENT_UPDATE_KEY);
+        try {
+            while (true){
+                //反复抢锁，保证数据一致性
+                if (lock.tryLock(0,-1, TimeUnit.MILLISECONDS)){
+                    //当前获得锁的线程的id是
+                    System.out.println("getLock"+Thread.currentThread().getId());
+                    //保存评论
+                    boolean result = postCommentService.save(postComment);
+                    //脱敏
+                    PostCommentVO postCommentVO = new PostCommentVO();
+                    BeanUtils.copyProperties(postComment,postCommentVO);
+                    //添加默认值
+                    postCommentVO.setAvatarUrl(loginUser.getAvatarUrl());
+                    postCommentVO.setUsername(loginUser.getUsername());
+                    postCommentVO.setCommentState(0);
+                    //向评论列表添加评论
+                    commentVOListCache.add(postCommentVO);
+
+                    //更新数据库
+                    if (result){
+
+                        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+                        try {
+                            valueOperations.set(RedisConstant.REDIS_POST_COMMENT_KEY+postId,commentVOListCache);
+                        } catch (Exception e) {
+                            log.error("redis set key error",e);
+                        }
+                        return true;
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("addComment error", e);
+            return false;
+        }finally {
+            //只能自己释放自己的锁
+            if (lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
+        }
     }
 
+    //todo 缓存
     @Override
     public boolean deleteComment(long id, User loginUser) {
         PostComment postComment = postCommentService.getById(id);

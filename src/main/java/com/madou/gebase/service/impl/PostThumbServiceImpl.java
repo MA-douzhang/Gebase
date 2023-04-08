@@ -13,9 +13,11 @@ import com.madou.gebase.model.User;
 import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.PostThumbService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,9 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
     @Resource
     RedissonClient redissonClient;
 
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
     @Override
     public int doPostThumb(long postId, User loginUser) {
         Post post = postService.getById(postId);
@@ -51,12 +56,12 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         //代理类，在同一类中非业务方法调用业务方法会让业务失效
         PostThumbService postThumbService = (PostThumbService) AopContext.currentProxy();
         // 锁要包裹事务方法
-        RLock lock = redissonClient.getLock(RedisConstant.REDIS_THUMB_KEY+userId);
+        RLock lock = redissonClient.getLock(RedisConstant.REDIS_THUMB_KEY + userId);
         try {
             while (true) {
                 //线程重复拿锁
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                   return postThumbService.doPostThumbInner(userId,postId);
+                    return postThumbService.doPostThumbInner(userId, postId);
                 }
             }
         } catch (InterruptedException e) {
@@ -83,11 +88,15 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         PostThumb postThumb = new PostThumb();
         postThumb.setUserId(userId);
         postThumb.setPostId(postId);
-        QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>(postThumb);
-        PostThumb oldPostThumb = this.getOne(thumbQueryWrapper);
+        //查询缓存
+        String redisPostThumbKey = RedisConstant.REDIS_POST_THUMB_KEY + postId;
+        //查询该用户是否存在点赞缓存中
+        Boolean isMember = redisTemplate.opsForSet().isMember(redisPostThumbKey, userId);
         boolean result;
-        // 已点赞
-        if (oldPostThumb != null) {
+        //点赞过 ，取消点赞
+        if (BooleanUtils.isTrue(isMember)) {
+            QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>(postThumb);
+            //删除点赞表中信息
             result = this.remove(thumbQueryWrapper);
             if (result) {
                 // 点赞数 - 1
@@ -96,12 +105,19 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                         .gt("thumbNum", 0)
                         .setSql("thumbNum = thumbNum - 1")
                         .update();
-                return result ? -1 : 0;
             } else {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
+            //修改缓存
+            if (result){
+                Long remove = redisTemplate.opsForSet().remove(redisPostThumbKey, userId);
+                if (remove == null || remove.equals(0L) ){
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+                }
+            }
+            return result ? -1 : 0;
+            //未点赞
         } else {
-            // 未点赞
             result = this.save(postThumb);
             if (result) {
                 // 点赞数 + 1
@@ -109,10 +125,18 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                         .eq("id", postId)
                         .setSql("thumbNum = thumbNum + 1")
                         .update();
-                return result ? 1 : 0;
+
             } else {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
+            //存入缓存
+            if (result){
+                Long add = redisTemplate.opsForSet().add(redisPostThumbKey, userId);
+                if (add == null || add.equals(0L) ){
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+                }
+            }
+            return result ? 1 : 0;
         }
     }
 
@@ -131,6 +155,12 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
             userPostThumb = postThumbList.stream().map(PostThumb::getPostId).collect(Collectors.toList());
         }
         return userPostThumb;
+    }
+
+    @Override
+    public boolean isPostThumb(Long id, long userId) {
+        Boolean member = redisTemplate.opsForSet().isMember(RedisConstant.REDIS_POST_THUMB_KEY + id, userId);
+        return BooleanUtils.isTrue(member);
     }
 }
 

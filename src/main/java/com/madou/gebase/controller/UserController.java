@@ -11,7 +11,6 @@ import com.madou.gebase.model.request.UserRegisterRequest;
 import com.madou.gebase.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,8 +32,6 @@ public class UserController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private RedisTemplate<String,Object> redisTemplate;
 
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {

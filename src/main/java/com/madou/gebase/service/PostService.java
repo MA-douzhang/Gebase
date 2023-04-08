@@ -44,7 +44,7 @@ public interface PostService extends IService<Post> {
      */
     PostVO getPostInfoById(Long id);
     /**
-     * 添加帖子评论
+     * 添加帖子评论(同时更新缓存)
      * @param postCommentAddRequest
      * @param loginUser
      * @return
