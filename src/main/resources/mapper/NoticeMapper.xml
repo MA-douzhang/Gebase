@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.madou.gebase.mapper.NoticeMapper">
+
+    <resultMap id="BaseResultMap" type="com.madou.gebase.model.Notice">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="senderId" column="senderId" jdbcType="BIGINT"/>
+            <result property="receiverId" column="receiverId" jdbcType="BIGINT"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="contentType" column="contentType" jdbcType="INTEGER"/>
+            <result property="targetId" column="targetId" jdbcType="BIGINT"/>
+            <result property="noticeState" column="noticeState" jdbcType="TINYINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,senderId,receiverId,
+        content,contentType,targetId,
+        noticeState,createTime,updateTime,
+        isDelete
+    </sql>
+</mapper>

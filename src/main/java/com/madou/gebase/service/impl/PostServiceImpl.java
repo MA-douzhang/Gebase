@@ -6,6 +6,7 @@ import com.madou.gebase.common.ErrorCode;
 import com.madou.gebase.contant.RedisConstant;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.PostMapper;
+import com.madou.gebase.model.Notice;
 import com.madou.gebase.model.Post;
 import com.madou.gebase.model.PostComment;
 import com.madou.gebase.model.User;
@@ -13,6 +14,7 @@ import com.madou.gebase.model.request.PostCommentAddRequest;
 import com.madou.gebase.model.request.PostUpdateRequest;
 import com.madou.gebase.model.vo.PostCommentVO;
 import com.madou.gebase.model.vo.PostVO;
+import com.madou.gebase.service.NoticeService;
 import com.madou.gebase.service.PostCommentService;
 import com.madou.gebase.service.PostService;
 import com.madou.gebase.service.UserService;
@@ -44,6 +46,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     UserService userService;
     @Resource
     PostCommentService postCommentService;
+
+    @Resource
+    private NoticeService noticeService;
 
     @Resource
     private RedissonClient redissonClient;
@@ -203,9 +208,20 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
                     //向评论列表添加评论
                     commentVOListCache.add(postCommentVO);
 
-                    //更新数据库
-                    if (result){
 
+                    //发送通知给帖子的创建者
+                    Notice notice = new Notice();
+                    notice.setSenderId(userId);
+                    notice.setReceiverId(post.getUserId());
+                    notice.setTargetId(postId);
+                    notice.setContent(postComment.getContent());
+                    //1为评论
+                    notice.setContentType(1);
+                    long addNotice = noticeService.addNotice(notice);
+
+                    if (addNotice<0) throw new BusinessException(ErrorCode.SYSTEM_ERROR,"通知失败");
+                    //更新缓存
+                    if (result){
                         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
                         try {
                             valueOperations.set(RedisConstant.REDIS_POST_COMMENT_KEY+postId,commentVOListCache);

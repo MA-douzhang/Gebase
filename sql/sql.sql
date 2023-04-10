@@ -31,7 +31,7 @@ create table team
     teamState    int      default 0                 not null comment '状态 0-正常 1-私有  2-加密',
     expireTime   datetime                           null comment '过期时间',
     createTime   datetime default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime   datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP '更新时间',
+    updateTime datetime default CURRENT_TIMESTAMP not null comment '更新时间',
     isDelete     tinyint  default 0                 not null comment '是否删除'
 ) comment '队伍';
 
@@ -85,3 +85,18 @@ create table if not exists post_thumb
     index idx_postId (postId),
     index idx_userId (userId)
 ) comment '帖子点赞';
+
+create table notice
+(
+    id           bigint auto_increment comment '消息id'
+        primary key,
+    senderId       bigint                              not null comment '发送者id',
+    receiverId       bigint                              not null comment '接收者id',
+    content      varchar(256)                                not null comment '信息体(最大200字)',
+    contentType int not null comment '信息类型，1为评论，2为回复评论，3为点赞，4系统通知',
+    targetId bigint comment '信息体对象，帖子id等',
+    noticeState tinyint       default 0                 not null comment '状态 0未读，1已读',
+    createTime   datetime  default CURRENT_TIMESTAMP null comment '创建时间',
+    updateTime   timestamp default CURRENT_TIMESTAMP not null comment '更新时间',
+    isDelete     tinyint   default 0                 not null comment '是否删除'
+) comment '通知';

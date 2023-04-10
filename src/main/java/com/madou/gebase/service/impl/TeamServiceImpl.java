@@ -343,7 +343,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 //删除队长关系
                 UserTeam nextTeam = userTeamList.get(1);
                 Long nextUserId = nextTeam.getUserId();
-
                 Team updateTeam = new Team();
                 updateTeam.setUserId(nextUserId);
                 updateTeam.setId(teamId);
