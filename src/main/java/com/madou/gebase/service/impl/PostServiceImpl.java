@@ -149,6 +149,30 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         Long postVOId = postVO.getId();
         //查询缓存，没有缓存就查询数据库并更新缓存
         List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId);
+        if (postCommentVOList.size() >5){
+            postCommentVOList = postCommentVOList.subList(0,5);
+        }
+        postVO.setPostCommentList(postCommentVOList);
+        return postVO;
+    }
+
+    @Override
+    public PostVO getPostInfoById(Long id, boolean isInfo) {
+        Post post = this.getById(id);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "贴子不存在");
+        }
+        //帖子脱敏
+        PostVO postVO = new PostVO();
+        BeanUtils.copyProperties(post, postVO);
+        //查帖子的创建人信息
+        User createUser = userService.getById(postVO.getUserId());
+        postVO.setUsername(createUser.getUsername());
+        postVO.setAvatarUrl(createUser.getAvatarUrl());
+        //查询帖子评论
+        Long postVOId = postVO.getId();
+        //查询缓存，没有缓存就查询数据库并更新缓存
+        List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId);
         postVO.setPostCommentList(postCommentVOList);
         return postVO;
     }

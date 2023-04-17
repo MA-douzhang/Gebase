@@ -43,6 +43,13 @@ public interface PostService extends IService<Post> {
      * @return
      */
     PostVO getPostInfoById(Long id);
+
+    /**
+     * 查询帖子详细信息
+     * @param id
+     * @return
+     */
+    PostVO getPostInfoById(Long id,boolean isInfo);
     /**
      * 添加帖子评论(同时更新缓存)
      * @param postCommentAddRequest

@@ -114,11 +114,13 @@ public class PostController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<PostVO> getTeamById(@RequestParam long id) {
+    public BaseResponse<PostVO> getTeamById(@RequestParam long id,HttpServletRequest httpServletRequest) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        PostVO postVO = postService.getPostInfoById(id);
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        PostVO postVO = postService.getPostInfoById(id,true);
+        postVO.setThumb(postThumbService.isPostThumb(postVO.getId(),loginUser.getId()));
         if (postVO == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询帖子失败");
         }

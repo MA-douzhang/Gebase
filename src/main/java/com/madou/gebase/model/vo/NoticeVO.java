@@ -38,6 +38,11 @@ public class NoticeVO implements Serializable {
     private Integer contentType;
 
     /**
+     * 信息体对象，帖子id等
+     */
+    private Long targetId;
+
+    /**
      * 信息体对象，帖子内容等
      */
     private String targetContent;
