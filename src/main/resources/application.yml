@@ -4,17 +4,17 @@ spring:
   application:
     name: Gebase-backend
     #线上环境
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://124.71.138.38:3306/gebase
-    username: MA_dou
-    password: 789159357Zj
-    #本地环境
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
-#    username: root
-#    password: 123456
-#    url: jdbc:mysql://localhost:3306/gebase
+#    url: jdbc:mysql://服务器地址/gebase
+#    username:
+#    password:
+    #本地环境
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/gebase
   # 失效时间
   session:
     timeout: 86400
@@ -56,5 +56,5 @@ upload:
 #线上环境
 #upload:
 #  path: /www/wwwroot/gebase/uploadAvatarImg/
-#  address: http://124.71.138.38:9091/api
+#  address: http://服务器地址/api
 
