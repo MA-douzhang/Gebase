@@ -2,9 +2,9 @@ spring:
   # DataSource Config
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://124.71.138.38:3306/gebase
-    username: MA_dou
-    password: 789159357Zj
+    url: jdbc:mysql://localhost:3306/gebase
+    username:
+    password:
   # session 失效时间
   session:
     timeout: 86400
@@ -15,4 +15,3 @@ spring:
 server:
   address: 0.0.0.0
 
-#  web-address: http://127.0.0.1:5173/

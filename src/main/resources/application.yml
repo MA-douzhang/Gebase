@@ -3,12 +3,6 @@ spring:
     active: dev
   application:
     name: Gebase-backend
-    #线上环境
-#  datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://服务器地址/gebase
-#    username:
-#    password:
     #本地环境
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -21,7 +15,9 @@ spring:
   redis:
     port: 6379
     host: localhost
+    # host: 线上服务器地址
     database: 1
+    password:
   mvc:
     path-match:
       matching-strategy: ant_path_matcher
@@ -53,8 +49,8 @@ upload:
   path: D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\
   address: http://localhost:9091/api
 
+
 #线上环境
 #upload:
 #  path: /www/wwwroot/gebase/uploadAvatarImg/
-#  address: http://服务器地址/api
-
+#  address: http://服务器地址:9091/api

@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.madou</groupId>
     <artifactId>Gebase-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2</version>
     <name>Gebase-backend</name>
     <description>Gebase-backend</description>
 
