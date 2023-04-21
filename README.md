@@ -10,12 +10,22 @@
 ***
 Spring Boot + Mybatis(Plus) + MySQL + Redis + WebSocket + Swagger
 
-## 项目部署
+## 项目前后端部署
 ***
 
-### 本地部署
+## 本地部署
+## 前端部署方式
+1. 代码仓库 https://github.com/MA-douzhang/Gebase-front
+2. 初始化项目，下载依赖
+```
+npm install
+```
+3. 在package.json文件中使用 dev 启动
 
-1. 本地数据库部署运行sql文件
+端口号 5173
+## 后端部署
+1. 代码仓库 https://github.com/MA-douzhang/Gebase
+2. 本地数据库部署运行sql文件
 
 ## 安装redis
 1. Redis配置(需要本地部署Redis)
@@ -118,6 +128,8 @@ server:
 
 
 
+
+
 ## 伙伴校园的前端源码
 ***
 Gebase-front 后台系统，[前端源码项目](https://github.com/MA-douzhang/Gebase-front)
@@ -164,6 +176,7 @@ Gebase-front 后台系统，[前端源码项目](https://github.com/MA-douzhang/
 2. 新增了信息通知功能，对帖子中的评论和点赞会推送信息给帖子的创建者。
 3. 对用户模块，队伍模块，帖子模块都做了数据缓存，并使用Redisson锁保证事务的安全性。
 4. 增加如何本地部署和服务器部署文档
+5. 新增加了自动回复机器人（chatGPT）项目地址：[Gebase-auto-reply](https://github.com/MA-douzhang/Gebase-auto-reply)
 
 + [x] Redis对数据缓存
 + [x] 用分布式锁对事务做原子性操作
