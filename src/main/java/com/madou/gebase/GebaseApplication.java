@@ -15,5 +15,4 @@ public class GebaseApplication {
     public static void main(String[] args) {
         SpringApplication.run(GebaseApplication.class, args);
     }
-
 }

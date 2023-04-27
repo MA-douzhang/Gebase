@@ -3,6 +3,7 @@ spring:
     active: dev
   application:
     name: Gebase-backend
+    #线上环境
     #本地环境
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -17,7 +18,6 @@ spring:
     host: localhost
     # host: 线上服务器地址
     database: 1
-    password:
   mvc:
     path-match:
       matching-strategy: ant_path_matcher
@@ -34,7 +34,7 @@ server:
         domain: localhost #线下环境 域名的访问范围
         same-site: none #线下环境 域名的访问范围
         secure: true #线下环境 域名的访问范围
-#        domain: 线上服务器域名 （可以是服务器ip） #线上环境
+#         domain: 124.71.138.38 #线上环境
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false # 自动转化驼峰风格
@@ -49,8 +49,8 @@ upload:
   path: D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\
   address: http://localhost:9091/api
 
-
 #线上环境
 #upload:
 #  path: /www/wwwroot/gebase/uploadAvatarImg/
-#  address: http://服务器地址:9091/api
+#  address: http://线上ip:9091/api
+
