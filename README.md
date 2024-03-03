@@ -20,13 +20,19 @@ Spring Boot + Mybatis(Plus) + MySQL + Redis + WebSocket + Swagger
 ```
 npm install
 ```
-3. 在package.json文件中使用 dev 启动
+3. 全局搜索
 
-端口号 5173
+本地部署将其中的127.0.0.1要和前端的访问地址一致，如果前端访问地址为localhost
+请将127.0.0.1设置为localhost，后面地址为部署上线的地址，打包之后会根据
+isDev判断是的本地环境还是线上环境而使用不同请求地址。
+![](doc/code1.jpg)
+![](doc/code2.jpg)
+4. 在package.json文件中使用 dev 启动
+
 ## 后端部署
 1. 代码仓库 https://github.com/MA-douzhang/Gebase
 2. 本地数据库部署运行sql文件
-
+3. 修改配置文件dev中的相关配置
 ## 安装redis
 1. Redis配置(需要本地部署Redis)
 ```
@@ -37,14 +43,19 @@ npm install
     host: localhost
     database: 1
 ```
-2. 配置文件中头像上传地址需要重新配置,可自定义设置
+2. 配置文件中头像上传地址需要重新配置,可自定义设置，最好将地址保存为项目的resource包路径下
+   你的绝对路径\Gebase-bankend\src\main\resources，右键resource选择copy path，就是当前项目绝对路径
 ```
 upload:
   path: D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\
-  address: http://localhost:9091/api
+  address: http://localhost:9090/api
 
 ```
-端口号为 9091
+3. 修改项目默认头像
+
+将地址修改为127.0.0.1地址，或者线上服务地址都可
+![](doc/code3.jpg)
+端口号为 9090
 
 
 # 服务器部署

@@ -108,7 +108,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserPassword(encryptPassword);
         //添加用户的默认信息
         user.setUsername(userAccount);
-        user.setAvatarUrl("http://124.71.138.38:9091/api/uploads/default.png");
+        user.setAvatarUrl("http://127.0.0.1:9090/api/uploads/default.png");
         user.setUserProfile("这个人很懒，介绍都不写");
         user.setTags("[\"女\"]");
         boolean saveResult = this.save(user);
@@ -385,7 +385,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 删除之前的头像(如果是默认头像不删除)
         String image = loginUser.getAvatarUrl();
-        if (!image.equals("http://124.71.138.38:9091/api/uploads/default.png")) {
+        if (!image.equals("http://8.130.16.185:9090/api/uploads/default.png")) {
             //匹配头像图片在本地的uuid
             if (!fileUtils.del(image.substring(image.indexOf("uploads") + 8))) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR,"修改头像失败");

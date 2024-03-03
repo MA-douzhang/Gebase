@@ -1,4 +1,7 @@
 
+create database gebase;
+
+use gebase;
 
 create table notice
 (
