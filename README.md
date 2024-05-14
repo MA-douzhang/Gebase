@@ -6,7 +6,7 @@
 
 前端源码已经开源Gebase-front 前台界面，[前端源码项目](https://github.com/MA-douzhang/Gebase-front)
 
-该项目有完整论文，如有需要请添加WX号：wozuisuainizuichou
+该项目有完整论文，如有需要请添加WX号：wozuisuainizuichou 请著名来意
 ## 技术栈
 ***
 Spring Boot + Mybatis(Plus) + MySQL + Redis + WebSocket + Swagger
