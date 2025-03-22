@@ -43,6 +43,6 @@ mybatis-plus:
       logic-delete-value: 1 # 逻辑已删除值(默认为 1)
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
 ##本地环境
-upload:
-  path: D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\
-  address: http://localhost:9090/api
+innovation:
+  profile: C:/home/gebase/img
+  ipUrl: http://127.0.0.1:9090/api

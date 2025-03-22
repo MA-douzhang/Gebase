@@ -14,8 +14,7 @@ import java.io.File;
 @Data
 public class FileUtils {
 
-    @Value("${upload.path}")
-    public String path;
+    public String path="/resource/img";
 
 
     public File getPath() {

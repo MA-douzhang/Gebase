@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.madou.gebase.common.ErrorCode;
+import com.madou.gebase.config.CommonConfig;
+import com.madou.gebase.contant.Constants;
 import com.madou.gebase.contant.RedisConstant;
 import com.madou.gebase.exception.BusinessException;
 import com.madou.gebase.mapper.UserMapper;
@@ -12,8 +14,10 @@ import com.madou.gebase.model.User;
 import com.madou.gebase.model.dto.UserConsumerQuery;
 import com.madou.gebase.service.UserService;
 import com.madou.gebase.utils.AlgorithmUtils;
+import com.madou.gebase.utils.FileUploadUtils;
 import com.madou.gebase.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.redisson.api.RLock;
@@ -31,6 +35,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -61,11 +69,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private RedissonClient redissonClient;
 
-    /**
-      * 盐值
-     */
-    @Value("${upload.address}")
-    private String webAddress;
     private static final String SALT = "ma_dou";
 
 
@@ -378,21 +381,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!imageTypeRight(avatarImg)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"图片格式错误");
         }
-        // 获取上传文件后的路径
-        String path = uploadFile(avatarImg);
-        if (StringUtils.isBlank(path)){
+        try {
+            String uploadPath = uploadFile(avatarImg);
+            loginUser.setAvatarUrl(uploadPath);
+        } catch (IOException e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"图片上传失败");
         }
-        // 删除之前的头像(如果是默认头像不删除)
-        String image = loginUser.getAvatarUrl();
-        if (!image.equals("http://8.130.16.185:9090/api/uploads/default.png")) {
-            //匹配头像图片在本地的uuid
-            if (!fileUtils.del(image.substring(image.indexOf("uploads") + 8))) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR,"修改头像失败");
-            }
-        }
-        path = webAddress+path;
-        loginUser.setAvatarUrl(path);
         boolean result = this.updateById(loginUser);
         if (!result){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"用户头像更新失败");
@@ -404,7 +400,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return loginUser.getAvatarUrl();
     }
-
+    public String uploadFile(MultipartFile file) throws Exception {
+        try {
+            log.info("接收文件为：{}", file.getOriginalFilename());
+            // 获取配置好的路径
+            String targetDirectory = CommonConfig.getProfile();
+            // 确保目标目录存在，如果不存在则创建
+            Path targetPath = Paths.get(targetDirectory);
+            Files.createDirectories(targetPath);
+            // 获取原始文件名
+            String originalFilename = file.getOriginalFilename();
+            // 获取文件扩展名
+            String extension = originalFilename.substring(originalFilename.lastIndexOf('.'));
+            // 生成唯一文件名
+            String uniqueFileName = UUID.randomUUID().toString() + extension;
+            // 构建目标文件路径
+            Path targetFilePath = targetPath.resolve(uniqueFileName);
+            // 将文件复制到目标路径
+            try (var inputStream = file.getInputStream()) {
+                Files.copy(inputStream, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            log.info("文件上传成功，存储在：" + targetFilePath);
+            String relativeFilePath = CommonConfig.getIpUrl() + Constants.RESOURCE_PREFIX  +"/"+ uniqueFileName;
+            return relativeFilePath;
+        } catch (IOException e) {
+            System.out.println("文件上传失败：" + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
     @Override
     public UserConsumerQuery getByAccount(String account) {
         if (StringUtils.isBlank(account)){
@@ -487,28 +511,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();  //不带 .
         return imageType.contains(fileSuffix);
     }
-    /**
-     * 上传文件
-     *
-     * @param file
-     * @return 返回路径
-     */
-    public String uploadFile(MultipartFile file) {
-
-        String originalFilename = file.getOriginalFilename();
-        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-        // 只有当满足图片格式时才进来，重新赋图片名，防止出现名称重复的情况
-        String newFileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileSuffix;
-        // 该方法返回的为当前项目的工作目录，即在哪个地方启动的java线程
-        File fileTransfer = new File(fileUtils.getPath(), newFileName);
-        try {
-            file.transferTo(fileTransfer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // 将图片相对路径返回给前端
-        return "/uploads/" + newFileName;
-    }
+//    /**
+//     * 上传文件
+//     *
+//     * @param file
+//     * @return 返回路径
+//     */
+//    public String uploadFile(MultipartFile file) {
+//
+//        String originalFilename = file.getOriginalFilename();
+//        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+//        // 只有当满足图片格式时才进来，重新赋图片名，防止出现名称重复的情况
+//        String newFileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileSuffix;
+//        // 该方法返回的为当前项目的工作目录，即在哪个地方启动的java线程
+//        File fileTransfer = new File(fileUtils.getPath(), newFileName);
+//        try {
+//            file.transferTo(fileTransfer);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        // 将图片相对路径返回给前端
+//        return "/uploads/" + newFileName;
+//    }
 
 }
 

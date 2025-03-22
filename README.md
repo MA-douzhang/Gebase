@@ -44,12 +44,20 @@ isDev判断是的本地环境还是线上环境而使用不同请求地址。
     host: localhost
     database: 1
 ```
-2. 配置文件中头像上传地址需要重新配置,可自定义设置，最好将地址保存为项目的resource包路径下
-   你的绝对路径\Gebase-bankend\src\main\resources，右键resource选择copy path，就是当前项目绝对路径
+2. 配置文件中头像上传地址需要重新配置,默认图片上传到C:/home/gebase/img，ipUrl为图片的访问地址
 ```
-upload:
-  path: D:\\项目开发\\Gebase-bankend\\src\\main\\resources\\uploadAvatarImg\\
-  address: http://localhost:9090/api
+##本地环境
+innovation:
+  profile: C:/home/gebase/img
+  ipUrl: http://127.0.0.1:9090/api
+
+```
+如果需要上线服务，需要修改配置为
+```
+##本地环境
+innovation:
+  profile: home/gebase/img
+  ipUrl: http://服务IP:9090/api
 
 ```
 3. 修改项目默认头像
@@ -130,9 +138,10 @@ server:
 5. 配置文件中头像上传地址需要重新配置,可自定义设置
 ```
 #线上环境
-#upload:
-#  path: /www/wwwroot/gebase/uploadAvatarImg/
-#  address: http://服务器地址:9091/api
+innovation:
+  profile: home/gebase/img
+  ipUrl: http://服务IP:9090/api
+
 ```
 
 6. package打包，将打包好的jar文件上传服务器
@@ -154,7 +163,7 @@ Gebase-front 后台系统，[前端源码项目](https://github.com/MA-douzhang/
 
 # 效果展示
 ***
-[查看在线展示](http://124.71.138.38:5173/)
+~~[查看在线展示](http://124.71.138.38:5173/)~~
 
 ## 目标功能
 ***
