@@ -364,7 +364,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         Team team = getTeamById(teamId);
         //是否为队长
         long userId = loginUser.getId();
-        if (team.getUserId() != userId) {
+        //当为队长或者管理员时删除
+        if (team.getUserId() != userId&&loginUser.getUserRole()!=1) {
             throw new BusinessException(ErrorCode.NO_ADMIN);
         }
         //移除队伍
