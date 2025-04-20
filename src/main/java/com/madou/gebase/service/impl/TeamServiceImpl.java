@@ -14,10 +14,12 @@ import com.madou.gebase.model.enums.TeamStatusEnums;
 import com.madou.gebase.model.request.TeamJoinRequest;
 import com.madou.gebase.model.request.TeamQuitRequest;
 import com.madou.gebase.model.request.TeamUpdateRequest;
+import com.madou.gebase.model.vo.TeamTaskVO;
 import com.madou.gebase.model.vo.TeamVO;
 import com.madou.gebase.model.vo.UserTeamVO;
 import com.madou.gebase.model.vo.UserVO;
 import com.madou.gebase.service.TeamService;
+import com.madou.gebase.service.TeamTaskService;
 import com.madou.gebase.service.UserService;
 import com.madou.gebase.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     @Resource
     private RedissonClient redissonClient;
 
+    @Resource
+    private TeamTaskService teamTaskService;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public long addTeam(Team team, User loginUser) {
@@ -406,6 +410,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
         teamVO.setUserJoinList(userVOList);
         teamVO.setHasJoinNum(userVOList.size());
+        //查询队伍任务信息
+        List<TeamTaskVO> teamTaskVOList= teamTaskService.getTeamTaskInfoByTeamId(id);
+        teamVO.setTeamTaskList(teamTaskVOList);
         return teamVO;
     }
 

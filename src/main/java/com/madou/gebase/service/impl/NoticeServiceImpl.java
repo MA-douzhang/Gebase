@@ -10,8 +10,10 @@ import com.madou.gebase.model.Post;
 import com.madou.gebase.model.User;
 import com.madou.gebase.model.request.NoticeUpdateRequest;
 import com.madou.gebase.model.vo.NoticeVO;
+import com.madou.gebase.model.vo.TeamTaskVO;
 import com.madou.gebase.service.NoticeService;
 import com.madou.gebase.service.PostService;
+import com.madou.gebase.service.TeamTaskService;
 import com.madou.gebase.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -37,6 +39,9 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice>
     @Lazy
     @Resource
     private PostService postService;
+    @Lazy
+    @Resource
+    private TeamTaskService teamTaskService;
     @Override
     public long addNotice(Notice notice) {
         //请求参数是否为空
@@ -137,9 +142,15 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice>
 
         //查询对象内容（帖子）
         Long targetId = notice.getTargetId();
+        String content="";
         //代理 todo 可以采用反射方法对应不同的通知
-        Post target = postService.getById(targetId);
-        String content = target.getContent();
+        if (notice.getContentType()!=5){
+            Post target = postService.getById(targetId);
+            content = target.getContent();
+        }else {
+            TeamTaskVO teamTaskInfo = teamTaskService.getTeamTaskInfoById(targetId);
+            content=teamTaskInfo.getDescription();
+        }
         if (content.length() > 20) {
             content = content.substring(0, 20) + "...";
         }

@@ -70,4 +70,9 @@ public class TeamVO implements Serializable {
      */
     private List<UserVO> userJoinList;
 
+    /**
+     * 队伍任务的信息
+     */
+    private List<TeamTaskVO> teamTaskList;
+
 }

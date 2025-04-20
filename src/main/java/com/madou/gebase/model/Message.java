@@ -12,6 +12,8 @@ public class Message {
     private String userAccount;
     // 接收者name
     private String consumer;
+    //发送信息类型 message信息，image图片
+    private String type;
     // 发送的文本
     private String content;
     // 发送的头像

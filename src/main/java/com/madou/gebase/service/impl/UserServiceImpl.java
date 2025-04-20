@@ -493,7 +493,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         List<User> userList= (List<User>) valueOperations.get(RedisConstant.REDIS_RECOMMEND_KEY);
         //缓存为空，查询数据库并写入缓存,不为空返回缓存数据
-        return userList == null ? getRecommend():userList;
+        return userList.size() == 0 ? getRecommend():userList;
     }
 
     /**

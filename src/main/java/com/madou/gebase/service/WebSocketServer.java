@@ -89,7 +89,7 @@ public class WebSocketServer {
      *
      * @param message 客户端发送过来的消息
      */
-    @OnMessage
+    @OnMessage(maxMessageSize = 10240000)
     public void onMessage(String message, Session session) {
         // todo 持久化
         System.out.println("server get " + message);

@@ -35,7 +35,7 @@ public class Notice implements Serializable {
     private String content;
 
     /**
-     * 信息类型，1为评论，2为回复评论，3为点赞，4系统通知
+     * 信息类型，1为评论，2为回复评论，3为点赞，4系统通知，5队伍任务评论
      */
     private Integer contentType;
 
